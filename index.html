@@ -214,6 +214,22 @@ pre{
 .gambar-container img:hover{
   transform:scale(1.05);
 }
+
+.zoom-box{
+  overflow:hidden;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+#popupImg{
+  max-width:80%;
+  max-height:80vh;
+  border-radius:10px;
+  transition:transform 0.2s ease;
+  transform:scale(1);
+  cursor:grab;
+}
 </style>
 </head>
 
@@ -559,9 +575,9 @@ Pembayaran melalui BRI berhasil
 </section>
 <section id="flowchart-diagram class">
  <div id="imgPopup" class="popup">
-  <div class="popup-content" style="width:auto; background:transparent;">
+  <div class="popup-content zoom-box" style="width:auto; background:transparent;">
     <span class="close" onclick="tutupApp('imgPopup')">✖</span>
-    <img id="popupImg" src="" style="max-width:90%; max-height:90vh; border-radius:10px;">
+    <img id="popupImg" src="">
   </div>
 </div>
     <h2>flowchart-diagram class -codesemu</h2>
@@ -569,6 +585,7 @@ Pembayaran melalui BRI berhasil
       <img src="./flowchart.jpg" onclick="zoomGambar(this)">
       <img src="./diagram-class.jpg" onclick="zoomGambar(this)">
       <img src="./kodesemu.jpg" onclick="zoomGambar(this)">
+    </div>
 </section>
 <footer>
   &copy; 2026 Tugas OOP Dart
@@ -646,7 +663,16 @@ document.getElementById(id).style.display="flex";
 }
 
 function tutupApp(id){
-document.getElementById(id).style.display="none";
+  document.getElementById(id).style.display = "none";
+
+  if(id === "imgPopup"){
+    scale = 1;
+    translateX = 0;
+    translateY = 0;
+
+    popupImg.style.transform =
+      `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
 }
 
 window.onclick = function(event) {
@@ -657,10 +683,90 @@ window.onclick = function(event) {
   });
 }
 
+let scale = 1;
+
 function zoomGambar(img){
-  document.getElementById("imgPopup").style.display = "flex";
-  document.getElementById("popupImg").src = img.src;
+  const popup = document.getElementById("imgPopup");
+  const popupImg = document.getElementById("popupImg");
+
+  popup.style.display = "flex";
+  popupImg.src = img.src;
+
+  scale = 1;
+  translateX = 0;
+  translateY = 0;
+
+  popupImg.style.transform =
+    `translate(${translateX}px, ${translateY}px) scale(${scale})`;
 }
+let isDragging = false;
+let startX, startY;
+let translateX = 0;
+let translateY = 0;
+
+const popupImg = document.getElementById("popupImg");
+
+// mulai drag
+popupImg.addEventListener("mousedown", function(e){
+  if(scale > 1){ // hanya bisa drag kalau sudah di zoom
+    isDragging = true;
+    startX = e.clientX;
+startY = e.clientY;
+    popupImg.style.cursor = "grabbing";
+  }
+});
+
+// saat digeser
+document.addEventListener("mousemove", function(e){
+  if(isDragging){
+    translateX += e.clientX - startX;
+translateY += e.clientY - startY;
+
+startX = e.clientX;
+startY = e.clientY;
+
+    popupImg.style.transform =
+      `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
+});
+
+// selesai drag
+document.addEventListener("mouseup", function(){
+  isDragging = false;
+  popupImg.style.cursor = "grab";
+});
+
+// zoom pakai scroll
+popupImg.addEventListener("wheel", function(e){
+  e.preventDefault();
+
+  const rect = popupImg.getBoundingClientRect();
+
+  // posisi mouse relatif terhadap gambar
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const oldScale = scale;
+
+  // zoom
+  if(e.deltaY < 0){
+    scale += 0.1;
+  } else {
+    scale -= 0.1;
+  }
+
+  if(scale < 0.5) scale = 0.5;
+  if(scale > 5) scale = 5;
+
+  const scaleDiff = scale - oldScale;
+
+  // perbaikan translate agar tetap bisa geser bebas
+  translateX -= (mouseX - rect.width / 2) * (scaleDiff / oldScale);
+  translateY -= (mouseY - rect.height / 2) * (scaleDiff / oldScale);
+
+  popupImg.style.transform =
+    `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+});
 </script>
 
 </body>
